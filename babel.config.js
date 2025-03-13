@@ -11,6 +11,9 @@ module.exports = function (api) {
         safe: false,
         allowUndefined: true,
       }],
+      ["@babel/plugin-proposal-private-methods", { "loose": true }],
+      ["@babel/plugin-proposal-class-properties", { "loose": true }],
+      ["@babel/plugin-proposal-private-property-in-object", { "loose": true }]
     ],
   };
 };

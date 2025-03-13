@@ -34,8 +34,8 @@ export const useTodosQuery = () => {
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
         // This is the key setting for offline resilience
-        // It will not mark the query as stale when refetching fails
-        keepPreviousData: true,
+        // placeholderData replaces keepPreviousData in v5
+        placeholderData: (previousData) => previousData,
         // Continue showing cached data even when a refetch fails
         retryOnMount: false,
     });
@@ -50,30 +50,33 @@ export const useCompleteTodo = (queryClient: QueryClient) => {
         mutationKey: ['completeTodo'],
         mutationFn: completeTodoMutationFn,
         onMutate: async (toDoId) => {
+            // In v5, cancelQueries doesn't change much
             await queryClient.cancelQueries({ queryKey: ['todos'] });
 
             const previousToDos = queryClient.getQueryData<PagedToDos>(['todos']);
 
             queryClient.setQueryData<PagedToDos>(['todos'], (old) => {
+                if (!old) return { items: [] };
                 return {
-                    items:
-                        old?.items.map((item) => {
-                            if (item.id === toDoId) {
-                                return {
-                                    ...item,
-                                    completed: true,
-                                };
-                            } else {
-                                return item;
-                            }
-                        }) || [],
+                    items: old.items.map((item) => {
+                        if (item.id === toDoId) {
+                            return {
+                                ...item,
+                                completed: true,
+                            };
+                        } else {
+                            return item;
+                        }
+                    }),
                 };
             });
 
             return { previousToDos };
         },
         onError: (err, newTodo, context) => {
-            queryClient.setQueryData(['todos'], context?.previousToDos);
+            if (context?.previousToDos) {
+                queryClient.setQueryData(['todos'], context.previousToDos);
+            }
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['todos'] });
@@ -126,24 +129,25 @@ export const useAddTodo = (queryClient: QueryClient) => {
             const previousToDos = queryClient.getQueryData<PagedToDos>(['todos']);
 
             queryClient.setQueryData<PagedToDos>(['todos'], (old) => {
+                if (!old) return { items: [] };
                 return {
-                    items:
-                        (old && [
-                            ...old!.items,
-                            {
-                                ...addedToDo,
-                                completed: false,
-                                // random ID that will be overwritten when invalidating
-                                id: uuid.v4().toString(),
-                            },
-                        ]) ||
-                        [],
+                    items: [
+                        ...old.items,
+                        {
+                            ...addedToDo,
+                            completed: false,
+                            // random ID that will be overwritten when invalidating
+                            id: uuid.v4().toString(),
+                        },
+                    ],
                 };
             });
             return { previousToDos };
         },
         onError: (err, newTodo, context) => {
-            queryClient.setQueryData(['todos'], context?.previousToDos);
+            if (context?.previousToDos) {
+                queryClient.setQueryData(['todos'], context.previousToDos);
+            }
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['todos'] });
@@ -165,23 +169,24 @@ export const useAddTodoWithId = (queryClient: QueryClient) => {
             const previousToDos = queryClient.getQueryData<PagedToDos>(['todos']);
 
             queryClient.setQueryData<PagedToDos>(['todos'], (old) => {
+                if (!old) return { items: [] };
                 return {
-                    items:
-                        (old && [
-                            ...old!.items,
-                            {
-                                ...addedToDo,
-                                completed: false,
-                            },
-                        ]) ||
-                        [],
+                    items: [
+                        ...old.items,
+                        {
+                            ...addedToDo,
+                            completed: false,
+                        },
+                    ],
                 };
             });
 
             return { previousToDos };
         },
         onError: (err, newTodo, context) => {
-            queryClient.setQueryData(['todos'], context?.previousToDos);
+            if (context?.previousToDos) {
+                queryClient.setQueryData(['todos'], context.previousToDos);
+            }
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['todos'] });

@@ -20,10 +20,10 @@ const OfflineSimulator = () => {
                 onlineManager.setOnline(false);
                 setIsOnline(false);
             }
-            if (isNetworkAvailable) {
-                onlineManager.setOnline(true);
-                setIsOnline(true);
-            }
+            // if (isNetworkAvailable) {
+            //     onlineManager.setOnline(true);
+            //     setIsOnline(true);
+            // }
         };
 
         // Check immediately
