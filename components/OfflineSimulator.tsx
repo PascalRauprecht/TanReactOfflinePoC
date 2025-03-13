@@ -6,7 +6,7 @@ import { onlineManager } from '@tanstack/react-query';
 const OfflineSimulator = () => {
     const [isOnline, setIsOnline] = useState(onlineManager.isOnline());
     const [networkAvailable, setNetworkAvailable] = useState(true);
-    
+
     // Check if network is actually available
     useEffect(() => {
         // Function to check network status
@@ -14,22 +14,26 @@ const OfflineSimulator = () => {
             // Simple check using navigator.onLine
             const isNetworkAvailable = typeof navigator !== 'undefined' && navigator.onLine;
             setNetworkAvailable(isNetworkAvailable);
-            
+
             // If network is not available, ensure React Query knows we're offline
             if (!isNetworkAvailable) {
                 onlineManager.setOnline(false);
                 setIsOnline(false);
             }
+            if (isNetworkAvailable) {
+                onlineManager.setOnline(true);
+                setIsOnline(true);
+            }
         };
-        
+
         // Check immediately
         checkNetwork();
-        
+
         // Set up event listeners for online/offline events
         if (typeof window !== 'undefined') {
             window.addEventListener('online', checkNetwork);
             window.addEventListener('offline', checkNetwork);
-            
+
             // Clean up event listeners
             return () => {
                 window.removeEventListener('online', checkNetwork);
@@ -37,7 +41,7 @@ const OfflineSimulator = () => {
             };
         }
     }, []);
-    
+
     // If network is not available (ethernet unplugged), don't show the simulator
     if (!networkAvailable) {
         return null;
