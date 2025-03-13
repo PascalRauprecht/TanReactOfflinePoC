@@ -2,7 +2,18 @@
 
 This project consists of a React Native frontend and a GraphQL backend server.
 
-## Backend Setup
+## Quick Start (CodeSandbox)
+
+You can access the deployed version of this application without any local setup:
+
+- Frontend: [https://3jmqt9-19006.csb.app/](https://3jmqt9-19006.csb.app/)
+- Backend: [https://3jmqt9-4000.csb.app/](https://3jmqt9-4000.csb.app/)
+
+**Note:** These links might be unavailable if the CodeSandbox instances are not running or have been deactivated.
+
+## Local Development
+
+### Backend Setup
 
 1. Navigate to the server directory:
 
@@ -23,7 +34,7 @@ This project consists of a React Native frontend and a GraphQL backend server.
 
 The GraphQL server will start running on `http://localhost:4000/graphql`
 
-## Frontend Setup
+### Frontend Setup
 
 1. From the root directory, install dependencies:
 
