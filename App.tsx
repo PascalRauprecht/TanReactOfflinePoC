@@ -15,6 +15,13 @@ const queryClient = new QueryClient({
       cacheTime: 1000 * 60 * 60 * 24, // 24 hours
       staleTime: 2000,
       retry: 0,
+      // These settings help with offline resilience
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      // This is critical - it tells React Query to use cached data even when stale
+      // when the network is unavailable
+      networkMode: 'always',
     },
   },
 });

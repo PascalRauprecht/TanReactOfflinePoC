@@ -32,6 +32,12 @@ export const useTodosQuery = () => {
             `);
             return todos;
         },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        // This is the key setting for offline resilience
+        // It will not mark the query as stale when refetching fails
+        keepPreviousData: true,
+        // Continue showing cached data even when a refetch fails
+        retryOnMount: false,
     });
 };
 
