@@ -65,3 +65,77 @@ DSRN/
 ├── App.tsx          # Main application file
 └── api.ts           # API configuration
 ```
+
+## Offline Support with PersistQueryClientProvider
+
+This application implements offline support using TanStack Query's `PersistQueryClientProvider`. This powerful feature allows the app to work seamlessly even when the network connection is lost.
+
+### How PersistQueryClientProvider Works
+
+The `PersistQueryClientProvider` wraps the entire application and provides a persistent cache layer that works as follows:
+
+1. **Query Persistence**: All queries made through React Query are automatically persisted to AsyncStorage.
+
+```tsx
+// From App.tsx
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  throttleTime: 1000,
+});
+
+// Wrapping the app with PersistQueryClientProvider
+<PersistQueryClientProvider
+  client={queryClient}
+  persistOptions={{ persister: asyncStoragePersister }}
+  onSuccess={() => {
+    console.log("PersistQueryClientProvider.onSuccess");
+    queryClient
+      .resumePausedMutations()
+      .then(() => queryClient.invalidateQueries());
+  }}
+>
+  {/* Application components */}
+</PersistQueryClientProvider>
+```
+
+2. **Mutation Persistence**: When offline, mutations are automatically paused and stored.
+
+3. **Automatic Resumption**: When the app comes back online, paused mutations are automatically resumed.
+
+### Example: Adding a Todo While Offline
+
+When a user adds a new todo while offline:
+
+1. The mutation is executed locally and updates the UI immediately:
+
+```tsx
+// From AddToDoScreen.tsx
+const { mutate } = useAddTodoWithId(queryClient);
+
+// When user clicks "Done"
+mutate({ id: uuid.v4().toString(), name, description });
+```
+
+2. Behind the scenes, the mutation is paused and stored in AsyncStorage.
+
+3. When the app comes back online, the `onSuccess` callback in `PersistQueryClientProvider` is triggered:
+
+```tsx
+onSuccess={() => {
+  console.log("PersistQueryClientProvider.onSuccess");
+  queryClient
+    .resumePausedMutations()  // Resume all paused mutations
+    .then(() => queryClient.invalidateQueries());  // Refresh data
+}}
+```
+
+4. The paused mutation is executed against the server, and the local cache is updated with the server response.
+
+### Benefits in This Project
+
+- **Seamless User Experience**: Users can continue adding and completing todos even when offline.
+- **Data Integrity**: All changes made offline are synchronized when the connection is restored.
+- **Optimistic Updates**: The UI updates immediately, providing instant feedback to users.
+- **Conflict Resolution**: The system handles conflicts between local and server state.
+
+This implementation makes the Todo app resilient to network issues, providing a native-like experience even in a web environment.
