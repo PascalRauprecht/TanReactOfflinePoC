@@ -4,7 +4,10 @@ import { REACT_APP_API_URL, REACT_APP_API_KEY } from '@env';
 import { AddToDoInput, AddTodoWithIdInput, PagedToDos, ToDo } from './types/ToDo';
 import uuid from 'react-native-uuid';
 
-export const graphQLClient = new GraphQLClient('http://localhost:4000/', {
+// Ensure API URL has proper protocol
+const apiUrl = REACT_APP_API_URL!.startsWith('http') ? REACT_APP_API_URL : `http://${REACT_APP_API_URL}`;
+
+export const graphQLClient = new GraphQLClient(apiUrl, {
     headers: {
         'x-api-key': REACT_APP_API_KEY,
     },
@@ -13,6 +16,8 @@ export const graphQLClient = new GraphQLClient('http://localhost:4000/', {
 type TTodosQuery = {
     todos: PagedToDos;
 };
+
+console.log(REACT_APP_API_URL);
 
 export const useTodosQuery = () => {
     return useQuery({
@@ -43,6 +48,10 @@ export const useTodosQuery = () => {
 
 type TCompleteTodoMutation = {
     completeTodo: ToDo;
+};
+
+type TReopenTodoMutation = {
+    reopenTodo: ToDo;
 };
 
 export const useCompleteTodo = (queryClient: QueryClient) => {
@@ -84,6 +93,44 @@ export const useCompleteTodo = (queryClient: QueryClient) => {
     });
 };
 
+export const useReopenTodo = (queryClient: QueryClient) => {
+    return useMutation({
+        mutationKey: ['reopenTodo'],
+        mutationFn: reopenTodoMutationFn,
+        onMutate: async (toDoId) => {
+            await queryClient.cancelQueries({ queryKey: ['todos'] });
+
+            const previousToDos = queryClient.getQueryData<PagedToDos>(['todos']);
+
+            queryClient.setQueryData<PagedToDos>(['todos'], (old) => {
+                if (!old) return { items: [] };
+                return {
+                    items: old.items.map((item) => {
+                        if (item.id === toDoId) {
+                            return {
+                                ...item,
+                                completed: false,
+                            };
+                        } else {
+                            return item;
+                        }
+                    }),
+                };
+            });
+
+            return { previousToDos };
+        },
+        onError: (err, newTodo, context) => {
+            if (context?.previousToDos) {
+                queryClient.setQueryData(['todos'], context.previousToDos);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['todos'] });
+        },
+    });
+};
+
 export const completeTodoMutationFn = async (toDoId: string) => {
     const { completeTodo } = await graphQLClient.request<TCompleteTodoMutation>(
         gql`
@@ -99,6 +146,23 @@ export const completeTodoMutationFn = async (toDoId: string) => {
         { toDoId }
     );
     return completeTodo;
+};
+
+export const reopenTodoMutationFn = async (toDoId: string) => {
+    const { reopenTodo } = await graphQLClient.request<TReopenTodoMutation>(
+        gql`
+            mutation ReopenTodo($toDoId: String!) {
+                reopenTodo(id: $toDoId) {
+                    completed
+                    description
+                    id
+                    name
+                }
+            }
+        `,
+        { toDoId }
+    );
+    return reopenTodo;
 };
 
 type TAddTodoMutation = {
@@ -198,6 +262,10 @@ type TResetTodosMutation = {
     resetTodos: PagedToDos;
 };
 
+type TResetTodosToOpenMutation = {
+    resetTodosToOpen: PagedToDos;
+};
+
 export const useResetTodos = (queryClient: QueryClient) => {
     return useMutation({
         mutationKey: ['resetTodos'],
@@ -217,6 +285,32 @@ export const useResetTodos = (queryClient: QueryClient) => {
                 `
             );
             return resetTodos;
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(['todos'], data);
+        },
+    });
+};
+
+export const useResetTodosToOpen = (queryClient: QueryClient) => {
+    return useMutation({
+        mutationKey: ['resetTodosToOpen'],
+        mutationFn: async () => {
+            const { resetTodosToOpen } = await graphQLClient.request<TResetTodosToOpenMutation>(
+                gql`
+                    mutation ResetTodosToOpen {
+                        resetTodosToOpen {
+                            items {
+                                id
+                                name
+                                description
+                                completed
+                            }
+                        }
+                    }
+                `
+            );
+            return resetTodosToOpen;
         },
         onSuccess: (data) => {
             queryClient.setQueryData(['todos'], data);

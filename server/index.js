@@ -47,8 +47,10 @@ const typeDefs = `#graphql
     addTodo(newToDo: AddToDoInput!): Todo!
     addTodoWithId(id: ID!, newToDo: AddToDoInput!): Todo!
     completeTodo(id: String!): Todo!
+    reopenTodo(id: String!): Todo!
     deleteTodo(id: ID!): Boolean!
     resetTodos: TodoList!
+    resetTodosToOpen: TodoList!
   }
 `;
 
@@ -58,6 +60,14 @@ const resolvers = {
         todos: () => ({ items: todos }),
     },
     Mutation: {
+        resetTodosToOpen: () => {
+            // Reset todos to initial state but ensure all are marked as not completed (open)
+            todos = initialTodos.map(todo => ({
+                ...todo,
+                completed: false
+            }));
+            return { items: todos };
+        },
         resetTodos: () => {
             todos = [...initialTodos];
             return { items: todos };
@@ -86,6 +96,12 @@ const resolvers = {
             const todo = todos.find((t) => t.id === id);
             if (!todo) throw new Error('Todo not found');
             todo.completed = true;
+            return todo;
+        },
+        reopenTodo: (_, { id }) => {
+            const todo = todos.find((t) => t.id === id);
+            if (!todo) throw new Error('Todo not found');
+            todo.completed = false;
             return todo;
         },
         deleteTodo: (_, { id }) => {

@@ -6,16 +6,15 @@ import { ToDo } from "../types/ToDo";
 
 interface ToDoItemProps {
   toDo: ToDo;
-  onComplete(toDoId: string): void;
+  onToggleStatus(toDoId: string, isCompleted: boolean): void;
 }
 
-const ToDoItem = ({ toDo, onComplete }: ToDoItemProps) => {
+const ToDoItem = ({ toDo, onToggleStatus }: ToDoItemProps) => {
   return (
     <View style={[styles.container, toDo.completed && { opacity: 0.7 }]}>
       <Checkbox
-        disabled={toDo.completed}
         value={toDo.completed}
-        onValueChange={() => onComplete(toDo.id)}
+        onValueChange={() => onToggleStatus(toDo.id, toDo.completed)}
         color={toDo.completed ? "#4CAF50" : undefined}
       />
       <View style={styles.content}>

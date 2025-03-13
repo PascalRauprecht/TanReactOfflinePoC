@@ -5,16 +5,16 @@ import ToDoItem from "./ToDoItem";
 
 interface ToDoListProps {
   toDos: ToDo[];
-  onCompleteToDo: (toDoId: string) => void;
+  onToggleTodoStatus: (toDoId: string, isCompleted: boolean) => void;
 }
 
-const ToDoList = ({ toDos, onCompleteToDo }: ToDoListProps) => {
+const ToDoList = ({ toDos, onToggleTodoStatus }: ToDoListProps) => {
   return (
     <View style={styles.container}>
       <FlatList
         data={toDos}
         renderItem={({ item }) => (
-          <ToDoItem toDo={item} onComplete={onCompleteToDo} />
+          <ToDoItem toDo={item} onToggleStatus={onToggleTodoStatus} />
         )}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}

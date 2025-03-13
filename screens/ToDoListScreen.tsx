@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { PagedToDos } from '../types/ToDo';
 import { onlineManager, useQueryClient } from '@tanstack/react-query';
-import { useCompleteTodo, useTodosQuery, useResetTodos } from '../api';
+import { useCompleteTodo, useReopenTodo, useTodosQuery, useResetTodos } from '../api';
 import OfflineSimulator from '../components/OfflineSimulator';
 
 type ToDoListScreenProps = NativeStackScreenProps<RootStackParamList, 'ToDoList'>;
@@ -59,12 +59,19 @@ const ToDoListScreen = ({ navigation }: ToDoListScreenProps) => {
     }, [navigation]);
 
     const queryClient = useQueryClient();
-    const { mutate } = useCompleteTodo(queryClient);
+    const { mutate: completeTodo } = useCompleteTodo(queryClient);
+    const { mutate: reopenTodo } = useReopenTodo(queryClient);
     const { mutate: resetTodos } = useResetTodos(queryClient);
 
     const handleResetTodos = () => resetTodos();
 
-    const handleCompleteToDo = (toDoId: string) => mutate(toDoId);
+    const handleToggleTodoStatus = (toDoId: string, isCompleted: boolean) => {
+        if (isCompleted) {
+            reopenTodo(toDoId);
+        } else {
+            completeTodo(toDoId);
+        }
+    };
 
     const { data, isLoading, isError, isSuccess, isFetching } = useTodosQuery();
     const [isOnline, setIsOnline] = useState(onlineManager.isOnline());
@@ -111,7 +118,7 @@ const ToDoListScreen = ({ navigation }: ToDoListScreenProps) => {
                         <Text style={styles.errorText}>Failed to load tasks</Text>
                     </View>
                 )}
-                {data && <ToDoList toDos={data.items} onCompleteToDo={handleCompleteToDo} />}
+                {data && <ToDoList toDos={data.items} onToggleTodoStatus={handleToggleTodoStatus} />}
                 {isFetching && data && (
                     <View style={[styles.loadingOverlay, styles.messageContainer]}>
                         <ActivityIndicator size="small" color="#0ea5e9" />
@@ -133,6 +140,9 @@ const styles = StyleSheet.create({
     },
     resetButton: {
         backgroundColor: '#64748b',
+    },
+    resetToOpenButton: {
+        backgroundColor: '#0891b2',
     },
     container: {
         flex: 1,
