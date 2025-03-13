@@ -47,11 +47,23 @@ const ToDoListScreen = ({ navigation }: ToDoListScreenProps) => {
             title: 'Tasks',
             headerRight: () => (
                 <View style={styles.headerButtonContainer}>
-                    <Pressable style={({ pressed }) => [styles.headerButton, styles.resetButton, pressed && styles.headerButtonPressed]} onPress={handleResetTodos}>
-                        <Text style={styles.headerButtonText}>Reset</Text>
+                    <Pressable 
+                        style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]} 
+                        onPress={handleResetTodos}
+                    >
+                        <View style={styles.iconWrapper}>
+                            <Text style={styles.iconText}>↻</Text>
+                        </View>
+                        <Text style={styles.buttonLabel}>Reset</Text>
                     </Pressable>
-                    <Pressable style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]} onPress={() => navigation.navigate('AddToDo')}>
-                        <Text style={styles.headerButtonText}>Add New</Text>
+                    <Pressable 
+                        style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]} 
+                        onPress={() => navigation.navigate('AddToDo')}
+                    >
+                        <View style={styles.iconWrapper}>
+                            <Text style={styles.iconText}>+</Text>
+                        </View>
+                        <Text style={styles.buttonLabel}>New</Text>
                     </Pressable>
                 </View>
             ),
@@ -136,13 +148,8 @@ const styles = StyleSheet.create({
     headerButtonContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-    },
-    resetButton: {
-        backgroundColor: '#64748b',
-    },
-    resetToOpenButton: {
-        backgroundColor: '#0891b2',
+        gap: 12,
+        marginRight: 4,
     },
     container: {
         flex: 1,
@@ -151,19 +158,33 @@ const styles = StyleSheet.create({
     list: {
         flex: 1,
     },
-    headerButton: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 6,
-        backgroundColor: '#0ea5e9',
-        marginRight: 8,
+    iconButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 8,
     },
-    headerButtonPressed: {
-        backgroundColor: '#0284c7',
+    iconButtonPressed: {
+        opacity: 0.7,
     },
-    headerButtonText: {
-        color: '#ffffff',
-        fontSize: 14,
+    iconWrapper: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        backgroundColor: '#f1f5f9',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 4,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    iconText: {
+        fontSize: 18,
+        color: '#64748b',
+        fontWeight: '600',
+    },
+    buttonLabel: {
+        fontSize: 10,
+        color: '#64748b',
         fontWeight: '500',
     },
     messageContainer: {

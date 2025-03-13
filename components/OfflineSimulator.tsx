@@ -1,11 +1,49 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import React, { useState, useEffect } from 'react';
-
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
 import { onlineManager } from '@tanstack/react-query';
 
 const OfflineSimulator = () => {
     const [isOnline, setIsOnline] = useState(onlineManager.isOnline());
     const [networkAvailable, setNetworkAvailable] = useState(true);
+
+    // Animation values
+    const switchTranslateX = useRef(new Animated.Value(isOnline ? 1 : 0)).current;
+    const containerBgColor = useRef(new Animated.Value(isOnline ? 1 : 0)).current;
+    const statusIconScale = useRef(new Animated.Value(1)).current;
+    const cardScale = useRef(new Animated.Value(1)).current;
+
+    // Animate when online status changes
+    useEffect(() => {
+        // Animate switch position
+        Animated.spring(switchTranslateX, {
+            toValue: isOnline ? 1 : 0,
+            friction: 6,
+            tension: 300,
+            useNativeDriver: false,
+        }).start();
+
+        // Animate container background
+        Animated.timing(containerBgColor, {
+            toValue: isOnline ? 1 : 0,
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
+
+        // Animate status icon
+        Animated.sequence([
+            Animated.timing(statusIconScale, {
+                toValue: 0.8,
+                duration: 150,
+                useNativeDriver: true,
+            }),
+            Animated.spring(statusIconScale, {
+                toValue: 1,
+                friction: 3,
+                tension: 400,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [isOnline]);
 
     // Check if network is actually available
     useEffect(() => {
@@ -20,10 +58,6 @@ const OfflineSimulator = () => {
                 onlineManager.setOnline(false);
                 setIsOnline(false);
             }
-            // if (isNetworkAvailable) {
-            //     onlineManager.setOnline(true);
-            //     setIsOnline(true);
-            // }
         };
 
         // Check immediately
@@ -47,32 +81,75 @@ const OfflineSimulator = () => {
         return null;
     }
 
+    // Calculate interpolated values for animations
+    const switchPosition = switchTranslateX.interpolate({
+        inputRange: [0, 1],
+        outputRange: [2, 30],
+    });
+
+    const bgColor = containerBgColor.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['#fef2f2', '#f0fdf4'],
+    });
+
+    const toggleNetwork = () => {
+        // Only animate the thumb and icon, not the whole card
+        const newStatus = !isOnline;
+        onlineManager.setOnline(newStatus);
+        setIsOnline(newStatus);
+    };
+
     return (
         <View style={styles.container}>
-            <View style={styles.buttons}>
-                <Pressable
-                    style={({ pressed }) => [styles.button, isOnline && styles.activeButton, pressed && styles.buttonPressed]}
-                    onPress={() => {
-                        onlineManager.setOnline(true);
-                        setIsOnline(onlineManager.isOnline());
-                    }}
+            <Pressable onPress={toggleNetwork}>
+                <Animated.View 
+                    style={[
+                        styles.statusDisplay, 
+                        { backgroundColor: bgColor }
+                    ]}
                 >
-                    <Text style={[styles.buttonText, isOnline && styles.activeButtonText]}>Online</Text>
-                </Pressable>
-                <Pressable
-                    style={({ pressed }) => [styles.button, !isOnline && styles.activeButton, pressed && styles.buttonPressed]}
-                    onPress={() => {
-                        onlineManager.setOnline(false);
-                        setIsOnline(onlineManager.isOnline());
-                    }}
-                >
-                    <Text style={[styles.buttonText, !isOnline && styles.activeButtonText]}>Offline</Text>
-                </Pressable>
-            </View>
-            <View style={styles.statusContainer}>
-                <View style={[styles.statusDot, isOnline ? styles.onlineDot : styles.offlineDot]} />
-                <Text style={styles.statusText}>{isOnline ? 'Connected' : 'Offline'}</Text>
-            </View>
+                    <View style={styles.contentContainer}>
+                        <Animated.View 
+                            style={[
+                                styles.statusIcon, 
+                                isOnline ? styles.statusIconOnline : styles.statusIconOffline, 
+                                { transform: [{ scale: statusIconScale }] }
+                            ]}
+                        >
+                            <Text style={styles.statusIconText}>{isOnline ? '✓' : '✕'}</Text>
+                        </Animated.View>
+
+                        <View style={styles.statusTextContainer}>
+                            <Text 
+                                style={[
+                                    styles.statusLabel, 
+                                    isOnline ? styles.statusLabelOnline : styles.statusLabelOffline
+                                ]}
+                            >
+                                {isOnline ? 'ONLINE' : 'OFFLINE'}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Custom Toggle Switch */}
+                    <View style={styles.switchContainer}>
+                        <Animated.View 
+                            style={[
+                                styles.switchTrack, 
+                                isOnline ? styles.switchTrackOnline : styles.switchTrackOffline
+                            ]}
+                        >
+                            <Animated.View 
+                                style={[
+                                    styles.switchThumb, 
+                                    { transform: [{ translateX: switchPosition }] }, 
+                                    isOnline ? styles.switchThumbOnline : styles.switchThumbOffline
+                                ]} 
+                            />
+                        </Animated.View>
+                    </View>
+                </Animated.View>
+            </Pressable>
         </View>
     );
 };
@@ -81,60 +158,101 @@ export default OfflineSimulator;
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#ffffff',
         paddingVertical: 12,
         paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
     },
-    buttons: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 8,
-        marginBottom: 12,
-    },
-    button: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 6,
-        backgroundColor: '#f1f5f9',
-        minWidth: 100,
-        alignItems: 'center',
-    },
-    buttonPressed: {
-        opacity: 0.8,
-    },
-    activeButton: {
-        backgroundColor: '#0ea5e9',
-    },
-    buttonText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#64748b',
-    },
-    activeButtonText: {
-        color: '#ffffff',
-    },
-    statusContainer: {
+    contentContainer: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    switchContainer: {
+        height: 28,
+        width: 56,
         justifyContent: 'center',
-        gap: 8,
     },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+    switchTrack: {
+        width: 56,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
     },
-    onlineDot: {
+    switchTrackOnline: {
+        backgroundColor: '#dcfce7',
+        borderWidth: 1,
+        borderColor: '#86efac',
+    },
+    switchTrackOffline: {
+        backgroundColor: '#fee2e2',
+        borderWidth: 1,
+        borderColor: '#fecaca',
+    },
+    switchThumb: {
+        position: 'absolute',
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1,
+        elevation: 2,
+    },
+    switchThumbOnline: {
         backgroundColor: '#22c55e',
     },
-    offlineDot: {
+    switchThumbOffline: {
         backgroundColor: '#ef4444',
     },
-    statusText: {
-        fontSize: 14,
+    statusDisplay: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    statusIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 14,
+    },
+    statusIconOnline: {
+        backgroundColor: '#dcfce7',
+    },
+    statusIconOffline: {
+        backgroundColor: '#fee2e2',
+    },
+    statusIconText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    statusTextContainer: {
+        flex: 1,
+    },
+    statusLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    statusLabelOnline: {
+        color: '#22c55e',
+    },
+    statusLabelOffline: {
+        color: '#ef4444',
+    },
+    statusDescription: {
+        fontSize: 13,
         color: '#64748b',
-        fontWeight: '500',
     },
 });
