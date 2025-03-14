@@ -59,7 +59,6 @@ export const useCompleteTodo = (queryClient: QueryClient) => {
         mutationKey: ['completeTodo'],
         mutationFn: completeTodoMutationFn,
         onMutate: async (toDoId) => {
-            // In v5, cancelQueries doesn't change much
             await queryClient.cancelQueries({ queryKey: ['todos'] });
 
             const previousToDos = queryClient.getQueryData<PagedToDos>(['todos']);

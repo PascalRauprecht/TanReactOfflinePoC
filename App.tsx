@@ -9,6 +9,8 @@ import { addTodoWithIdMutationFn, completeTodoMutationFn } from './api';
 import AddToDoScreen from './screens/AddToDoScreen';
 import ToDoListScreen from './screens/ToDoListScreen';
 import { RootStackParamList } from './types/navigation';
+import { View, StyleSheet } from 'react-native';
+import CacheViewer from './components/CacheViewer';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -30,7 +32,7 @@ const queryClient = new QueryClient({
 // In v5, mutation defaults are set differently
 const addTodoWithIdMutation = {
     mutationKey: ['addTodoWithId'],
-    mutationFn: ({ id, name, description }: { id: string, name: string, description: string }) => {
+    mutationFn: ({ id, name, description }: { id: string; name: string; description: string }) => {
         return addTodoWithIdMutationFn({ id, name, description });
     },
 };
@@ -60,19 +62,36 @@ export default function App() {
                 queryClient.resumePausedMutations().then(() => queryClient.invalidateQueries());
             }}
         >
-            <NavigationContainer>
-                <Stack.Navigator
-                    screenOptions={{
-                        contentStyle: {
-                            backgroundColor: '#ffffff',
-                        },
-                    }}
-                >
-                    <Stack.Screen name="ToDoList" component={ToDoListScreen} />
-                    <Stack.Screen name="AddToDo" component={AddToDoScreen} />
-                </Stack.Navigator>
-                <ReactQueryDevtools initialIsOpen={false} />
-            </NavigationContainer>
+            <View style={styles.container}>
+                <View style={styles.mainContent}>
+                    <NavigationContainer>
+                        <Stack.Navigator
+                            screenOptions={{
+                                contentStyle: {
+                                    backgroundColor: '#ffffff',
+                                },
+                            }}
+                        >
+                            <Stack.Screen name="ToDoList" component={ToDoListScreen} />
+                            <Stack.Screen name="AddToDo" component={AddToDoScreen} />
+                        </Stack.Navigator>
+                    </NavigationContainer>
+                </View>
+                <CacheViewer />
+
+                <ReactQueryDevtools initialIsOpen={false} position="left" />
+            </View>
         </PersistQueryClientProvider>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    mainContent: {
+        flex: 1,
+    },
+});
